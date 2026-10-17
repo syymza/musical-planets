@@ -10,7 +10,7 @@ A little space for sound. Add orbiting planets, shape their rhythms, and let a g
 - Each clockwise crossing of the top lane plays a note from the C major pentatonic scale. Tapping a planet auditions its note.
 - Explore three presets, or use pause, mute, volume, reset, and clear.
 - Keyboard: Tab to a planet, arrow keys to change its orbit, Delete/Backspace to remove it.
-- **Softer visuals** removes trails and pulse rings. It starts enabled when your device requests reduced motion. **Pause** stops the moving scene and silences output.
+- Your device’s reduced-motion preference automatically suppresses trails and pulse rings, including when the preference changes while the page is open. **Pause** stops the moving scene and silences output.
 
 ## Run
 

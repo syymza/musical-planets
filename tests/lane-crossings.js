@@ -22,7 +22,8 @@ const get = id => { if (!elements.has(id)) elements.set(id, new Element()); retu
 globalThis.document = { hidden: false, events: {}, getElementById: get, createElement: () => new Element(), querySelectorAll: () => buttons, addEventListener(k, f) { this.events[k] = f; } };
 const context = new Proxy({}, { get: (_, name) => name === 'createRadialGradient' ? () => ({ addColorStop() {} }) : () => {} });
 get('sky').getContext = () => context;
-globalThis.matchMedia = () => ({ matches: false });
+const motionPreference = { matches: false, events: {}, addEventListener(k, f) { this.events[k] = f; } };
+globalThis.matchMedia = () => motionPreference;
 globalThis.ResizeObserver = class { observe() {} };
 globalThis.devicePixelRatio = 1;
 let nextFrame, clock = 1000, audioStarts = 0;
@@ -31,7 +32,7 @@ const parameter = () => ({ value: 0, setTargetAtTime() {}, setValueAtTime() {}, 
 function audioNode() { return { gain: parameter(), frequency: parameter(), threshold: parameter(), ratio: parameter(), connect() {}, disconnect() {}, start() { audioStarts++; }, stop() {}, set onended(f) { f(); } }; }
 globalThis.window = { AudioContext: class { constructor() { this.state = 'running'; this.currentTime = 1; this.destination = {}; } createGain() { return audioNode(); } createOscillator() { return audioNode(); } createBiquadFilter() { return audioNode(); } createDynamicsCompressor() { return audioNode(); } } };
 const source = html.match(/<script>([\s\S]*?)<\/script>/)[1];
-const instrumented = source.replace(/\}\)\(\);\s*$/, `globalThis.appTest = {normalizeAngle, orbitStep, period, load, addPlanet, removePlanet, planets:()=>planets, audio:()=>audio, enableAudio:()=>{audio=new window.AudioContext();master=audio.createGain();started=true;muted=false;}, state:()=>({paused,muted,drag,noteCount})};})();`);
+const instrumented = source.replace(/\}\)\(\);\s*$/, `globalThis.appTest = {normalizeAngle, orbitStep, period, load, addPlanet, removePlanet, planets:()=>planets, audio:()=>audio, enableAudio:()=>{audio=new window.AudioContext();master=audio.createGain();started=true;muted=false;}, state:()=>({paused,muted,drag,noteCount,calm})};})();`);
 new Function(instrumented)();
 const app = globalThis.appTest, tau = Math.PI * 2;
 function tick(dt) { clock += dt * 1000; if (app.audio()) app.audio().currentTime = clock / 1000; const f = nextFrame; nextFrame = null; f(clock); }
@@ -101,5 +102,13 @@ check(app.state().noteCount === hiddenNotes && audioStarts === hiddenStarts, 're
 stage.events.pointerdown({ button: 0, isPrimary: true, pointerId: 2, clientX: 450, clientY: 300, target: p.el });
 app.load('bloom');
 check(app.state().drag === null && app.state().noteCount === 0, 'preset change clears stale drag and counter');
+check(!app.state().calm, 'normal system preference retains full visuals');
+motionPreference.events.change({ matches: true });
+check(app.state().calm && app.planets().every(planet => planet.trail.length === 0), 'reduced-motion change clears old trails');
+frames(.2);
+check(app.planets().every(planet => planet.trail.length <= 2), 'reduced-motion rendering limits trails');
+motionPreference.events.change({ matches: false });
+frames(.2);
+check(!app.state().calm && app.planets().every(planet => planet.trail.length > 2), 'system preference can restore full visuals');
 globalThis.testResult = `PASS: ${assertions} assertions; real inline app, preset/drag/pause/mute/hidden behavior and crossing properties.`;
 if (typeof console !== 'undefined') console.log(globalThis.testResult);
