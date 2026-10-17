@@ -2,7 +2,7 @@
 
 A small, local-synthesis browser instrument. Tap empty space for a circular starting velocity, or drag to launch. Select a planet to change its mass. Every crossing of the upward line from the moving star plays a pentatonic note.
 
-No dependencies, accounts, network calls, tracking or runtime AI. Serve this directory with any static server. Audio requires **Start listening** or **Test sound**; enabling sound is silent. Pause gates the music bus, while the optional test note remains available. Reset restores the chosen preset. Clear removes planets.
+No dependencies, accounts, network calls, tracking or runtime AI. Serve this directory with any static server. Audio requires **Start listening**. Its first successful user-initiated start plays one chime, including when the simulation is paused. Unmuting or resuming an interrupted context does not repeat it. There is no separate test-tone control. Pause gates the music bus. Reset restores the chosen preset. Clear removes planets.
 
 ## Gravity model
 
@@ -24,7 +24,7 @@ Measured in Chrome's OfflineAudioContext using the production graph at 48 kHz:
 | --- | ---: | ---: |
 | Previous highest note, default level | 0.0420 | 0.02125 |
 | Revised G5 musical note, default level | 0.2080 | 0.08584 |
-| Optional G5 test, default level | 0.2080 | 0.11514 |
+| Startup G5 chime, default level | 0.2080 | 0.11514 |
 | Revised C5/E5/A5 together, maximum level | 0.5599 | 0.29273 |
 
 These are digital amplitude measurements, not loudness readings from a phone speaker. Browser live preview also reached peak 0.2077 and RMS 0.1187. Where supported, the feature-detected Audio Session API requests the `playback` route, appropriate for a music toy without microphone capture. Unsupported browsers retain their normal route. Actual physical iPhone playback remains unverified. The app cannot control hardware volume, Bluetooth routing or browser/OS audio behavior.
@@ -35,6 +35,6 @@ These are digital amplitude measurements, not loudness readings from a phone spe
 
 Over 20 seconds, maximum relative energy drift in the eccentric two-body and three-body cases was 0.000724% and 0.000531%. Circular two-body relative drift over 30 seconds was 3.16e-13. The identical fixed-step results were checked at 30, 60 and 144 display Hz.
 
-Browser checks cover 1440 px desktop, 390 px and 320 px mobile widths, touch drag/prediction/release, mass controls at their extremes, visible collision/merger and preserved total mass, pause, silent audio enabling, optional test sound while paused, reduced-motion handling, and no console warnings/errors. Browser emulation and digital audio rendering do not establish physical iPhone speaker audibility.
+Browser checks cover 1440 px desktop, 390 px and 320 px mobile widths, touch drag/prediction/release, mass controls at their extremes, visible collision/merger and preserved total mass, pause, user-initiated audio enabling, startup chime while paused, reduced-motion handling, and no console warnings/errors. Browser emulation and digital audio rendering do not establish physical iPhone speaker audibility.
 
 Keyboard: Tab to a planet; arrow keys nudge velocity, Delete removes it. System reduced-motion preference suppresses trails and pulses. The simulation still moves; Pause stops time.
