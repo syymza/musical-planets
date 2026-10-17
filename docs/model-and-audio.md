@@ -4,7 +4,7 @@
 
 All bodies, including the star, move under pairwise softened Newtonian gravity in 2D. The model uses G = 1, softening length 0.012 and a fixed velocity-Verlet step of 1/600 second. The camera follows the center of mass; the small cross marks it. Sizes are exaggerated for interaction, and radius scales with the cube root of mass.
 
-The controls allow starting star mass from 0.5 to 3 and ordinary planet mass from 0.005 to 0.15, with a total mass budget of 4.2. Mergers preserve mass even when the result exceeds an ordinary control range.
+The controls allow starting star mass from 0.5 to 3 and ordinary planet mass from 0.005 to 0.15, with a total mass budget of 4.2. Mergers preserve mass even when the result exceeds an ordinary control range. Up to 32 planets may be active. With a star of mass 3 and 32 default-mass planets, total mass is 3.384, below the unchanged budget of 4.2. Heavier mass edits can exhaust the budget before the count limit; remove a body or reduce mass to add more.
 
 Bodies merge on contact. A swept-segment collision estimate catches fast crossings. A merger preserves total mass, linear momentum and center of mass. Volumes add; relative angular momentum becomes stored internal spin and relative translational kinetic energy becomes stored heat. Spin and heat are bookkeeping, not rendered rotation or thermodynamics. A change in body count also changes modeled binding energy, so mechanical energy is not conserved during mergers.
 
@@ -12,9 +12,11 @@ The star survives a star/planet merger; otherwise the heavier body retains its n
 
 ## Timing and prediction
 
-Aiming freezes the full system. The dotted path uses the same all-body integrator for up to three simulated seconds and stops at the first merger involving the aimed body. Release commits that starting velocity. The upward note line moves with the star. Half-open crossing endpoints avoid duplicate notes; the discontinuous position jump at a merger does not emit a crossing note.
+Aiming freezes the full system. The dotted path uses the same all-body integrator for up to three simulated seconds and stops at the first merger involving the aimed body. Release commits that starting velocity. One to twelve evenly spaced radial note lines move with the star. The first always points upward. Crossings use star-relative positions and are ordered within each integration step, including when a fast segment crosses several rays. Half-open crossing endpoints avoid duplicate notes; the discontinuous position jump at a merger does not emit a crossing note.
 
 Frame timing uses an accumulator. Pause, tab hiding and stalls longer than 100 ms discard backlog rather than simulating a burst of missed time.
+
+Changing line count only replaces the rays: it does not move planets, advance time, play a note or retain a stale flash. Reset and Clear retain the chosen line count, and clear crossing pulses. Rays and planets pulse on real crossings; reduced motion suppresses those pulses.
 
 ## Sound
 
@@ -22,7 +24,7 @@ Three scales expose six ascending note positions: C major pentatonic, C minor pe
 
 Notes use sine partials with C5–C6 fundamentals. A 160 Hz high-pass and 3.5 kHz voice low-pass shape the output. Note and preview voices share a three-voice pool. Previews occur only when the selected position changes, are limited to one request per 100 ms and can play while time is paused. Mute and volume still apply.
 
-Each actual merger requests a quiet impact: a wooden knock, a deeper tom for a heavier planet pair, or a warm thump for star absorption. Intensity follows dissipated translational kinetic energy per merged mass, with a bounded response. Two concurrent impact voices are allowed. Dense previews or collisions can be dropped at the limits. Impacts require enabled audio and are suppressed when paused, muted or hidden.
+Each actual merger requests a quiet impact: a wooden knock, a deeper tom for a heavier planet pair, or a warm thump for star absorption. Intensity follows dissipated translational kinetic energy per merged mass, with a bounded response. Two concurrent impact voices are allowed. Dense crossings, previews or collisions can be dropped at the limits. No backlog is queued for later playback; adding lines or planets does not increase the voice caps or output gain. Impacts require enabled audio and are suppressed when paused, muted or hidden.
 
 All voices pass through a shared soft limiter. Default volume is 38%. Where supported, the Audio Session API requests a playback route without microphone access; unsupported browsers keep their normal route. Digital amplitude tests cannot establish speaker loudness, Bluetooth routing or physical iPhone audibility.
 
