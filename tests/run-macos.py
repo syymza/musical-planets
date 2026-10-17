@@ -21,8 +21,8 @@ js.JSStringGetUTF8CString.restype = ctypes.c_size_t
 js.JSStringRelease.argtypes = [ptr]
 js.JSGlobalContextRelease.argtypes = [ptr]
 context = js.JSGlobalContextCreate(None)
-code = 'globalThis.testHTML=' + json.dumps((root / 'index.html').read_text()) + ';\n'
-code += (root / 'tests/lane-crossings.js').read_text() + '\nglobalThis.testResult;'
+code = 'globalThis.testFiles=' + json.dumps({n:(root/n).read_text() for n in ['physics.js','app.js']}) + ';\n'
+code += (root / 'tests/gravity.js').read_text() + '\nglobalThis.testResult;'
 script = js.JSStringCreateWithUTF8CString(code.encode())
 error = ptr()
 value = js.JSEvaluateScript(context, script, None, None, 1, ctypes.byref(error))
