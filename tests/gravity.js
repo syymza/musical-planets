@@ -29,6 +29,9 @@ group('Evenly spaced rays and half-open crossings in both directions',()=>{
   }
  }
 });
+group('One complete orbit crosses each selected ray exactly once in either direction',()=>{
+ for(const count of [1,3,12])for(const sign of [-1,1]){const r=1.5,m=.0001,a=.31,omega=Math.sqrt((1+m)/(r*r+P.SOFTENING**2)**1.5),ps=P.recenter([P.body('s',0,0,0,0,1,true),P.body('p',r*Math.cos(a),r*Math.sin(a),-sign*r*omega*Math.sin(a),sign*r*omega*Math.cos(a),m)]),hits=Array(count).fill(0);for(let i=0;i<Math.ceil(Math.PI*2/omega/P.DT);i++)for(const e of P.stepSystem(ps,P.DT,count).crossings)hits[e.line]++;ok(hits.every(n=>n===1),'each ray fires once per complete clockwise/counterclockwise orbit');}
+});
 group('Fast segments cross every intersected ray in chronological order',()=>{
  for(const sign of [-1,1]){const ps=[P.body('s',0,0,0,0,1e-12,true),P.body('p',-2*sign,-1,4*sign,0,1e-12)];const events=P.stepSystem(ps,1,12).crossings;ok(events.length===5,'five distinct rays on a fast upper segment');ok(new Set(events.map(e=>e.line)).size===5,'each ray exactly once');for(let i=1;i<events.length;i++)ok(events[i].time>=events[i-1].time,'chronological crossings');}
  const translated=[P.body('s',0,0,20,0,1e-12,true),P.body('p',1,-2,0,0,1e-12)];ok(P.stepSystem(translated,.1,4).crossings.filter(e=>e.line===0).length===1,'rays follow a translating star');
