@@ -16,6 +16,32 @@ group('Moving-star note line and half-open crossings',()=>{ok(P.rayCrossing(-1,-
 group('Fixed time steps produce identical results at 30, 60 and 144 Hz',()=>{const results=[];for(const hz of [30,60,144]){const ps=scene(),clock=P.clock();let steps=0;for(let frame=0;frame<hz*10;frame++){const n=clock.advance(1/hz);steps+=n;for(let i=0;i<n;i++)P.stepSystem(ps);}ok(steps===6000,'same step count');results.push(ps);}for(let j=1;j<results.length;j++)for(let i=0;i<2;i++)for(const k of ['x','y','vx','vy'])close(results[0][i][k],results[j][i][k],1e-12);const clock=P.clock();ok(clock.advance(.05,false)===0,'paused');ok(clock.advance(1)===0,'long stall discarded');});
 group('Distant bodies remain active',()=>{const ps=[P.body('s',0,0,0,0,1,true),P.body('p',20,0,3,0,.012)];P.stepSystem(ps);ok(P.active(ps).length===2,'no mass deletion');});
 
+group('Evenly spaced rays and half-open crossings in both directions',()=>{
+ for(const count of [1,2,3,4,7,12]){
+  const rays=P.noteRays(count);ok(rays.length===count,'requested rays');close(rays[0].x,0);close(rays[0].y,-1);
+  for(const ray of rays){close(Math.hypot(ray.x,ray.y),1);const angle=ray.line*Math.PI*2/count;close(ray.x,Math.sin(angle));close(ray.y,-Math.cos(angle));
+   for(const sign of [-1,1]){
+    const nx=-ray.y,ny=ray.x,s=P.body('s',0,0,0,0,1e-12,true),p=P.body('p',ray.x*2-nx*.1*sign,ray.y*2-ny*.1*sign,nx*sign,ny*sign,1e-12);
+    const first=P.stepSystem([s,p],.1,count).crossings.filter(e=>e.line===ray.line);ok(first.length===1,'arrival counts once on any ray in either direction');
+    ok(P.stepSystem([s,p],.1,count).crossings.every(e=>e.line!==ray.line),'departure does not double count');
+   }
+   const still=[P.body('s',0,0,0,0,1e-12,true),P.body('p',ray.x*2,ray.y*2,0,0,1e-12)];ok(P.stepSystem(still,P.DT,count).crossings.length===0,'stationary radial overlap is silent');
+  }
+ }
+});
+group('One complete orbit crosses each selected ray exactly once in either direction',()=>{
+ for(const count of [1,3,12])for(const sign of [-1,1]){const r=1.5,m=.0001,a=.31,omega=Math.sqrt((1+m)/(r*r+P.SOFTENING**2)**1.5),ps=P.recenter([P.body('s',0,0,0,0,1,true),P.body('p',r*Math.cos(a),r*Math.sin(a),-sign*r*omega*Math.sin(a),sign*r*omega*Math.cos(a),m)]),hits=Array(count).fill(0);for(let i=0;i<Math.ceil(Math.PI*2/omega/P.DT);i++)for(const e of P.stepSystem(ps,P.DT,count).crossings)hits[e.line]++;ok(hits.every(n=>n===1),'each ray fires once per complete clockwise/counterclockwise orbit');}
+});
+group('Fast segments cross every intersected ray in chronological order',()=>{
+ for(const sign of [-1,1]){const ps=[P.body('s',0,0,0,0,1e-12,true),P.body('p',-2*sign,-1,4*sign,0,1e-12)];const events=P.stepSystem(ps,1,12).crossings;ok(events.length===5,'five distinct rays on a fast upper segment');ok(new Set(events.map(e=>e.line)).size===5,'each ray exactly once');for(let i=1;i<events.length;i++)ok(events[i].time>=events[i-1].time,'chronological crossings');}
+ const translated=[P.body('s',0,0,20,0,1e-12,true),P.body('p',1,-2,0,0,1e-12)];ok(P.stepSystem(translated,.1,4).crossings.filter(e=>e.line===0).length===1,'rays follow a translating star');
+ const center=[P.body('s',0,0,0,0,1,true),P.body('p',-.001,0,2,0,.012)];ok(P.stepSystem(center,P.DT,12).crossings.length===0,'overlap merger does not invent central notes');
+});
+group('Ray count changes do not affect trajectories, prediction or merger invariants',()=>{
+ const one=scene(),many=scene(),before=P.totals(many);for(let i=0;i<1000;i++){P.stepSystem(one);P.stepSystem(many,P.DT,i%12+1);}for(let i=0;i<one.length;i++)for(const k of ['x','y','vx','vy'])close(one[i][k],many[i][k],0,'identical physics with changing ray count');close(P.totals(many).mass,before.mass);
+ const ps=scene(),pred=P.predict(ps,'p',.1),actual=ps.map(p=>({...p}));for(let i=0;i<60;i++)P.stepSystem(actual,P.DT,12);close(pred.points.at(-1).x,actual[1].x,1e-12);close(pred.points.at(-1).y,actual[1].y,1e-12);
+});
+
 (0,eval)(testFiles['audio.js']);const A=OrbitAudio;
 group('Three six-stop scales use exact equal-temperament pitch mapping',()=>{ok(A.SCALES.length===3,'three scales');for(let k=0;k<3;k++){ok(A.SCALES[k].names.length===6,'six labels');for(let n=0;n<6;n++){const f=A.frequency(n,k);ok(Number.isFinite(f)&&f>=523&&f<1047,'phone-friendly frequency range');close(12*Math.log2(f/A.frequency(0,k)),A.SCALES[k].semitones[n],1e-10,'semitone map');if(n)ok(f>A.frequency(n-1,k),'ascending stops');}}});
 group('Collision types and intensity are bounded and increase with severity',()=>{for(const [star,mass,kind]of [[false,.024,'small'],[false,.12,'heavy'],[true,1.012,'star']]){let last=0;for(const dissipated of [0,.0001,.01,1,100000]){const p=A.collisionProfile({keep:{isStar:star,mass},dissipated});ok(p.kind===kind,'correct percussion type');ok(p.gain>=.1&&p.gain<=.24,'bounded amplitude');ok(p.gain>=last,'severity monotonic');ok(p.duration>0&&p.duration<.5,'short impact');last=p.gain;}}});

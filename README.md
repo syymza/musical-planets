@@ -9,7 +9,8 @@ A small browser instrument where gravity makes the rhythm. Add tiny worlds, shap
 ## Play
 
 - Tap empty space for a circular starting orbit, or drag and release to launch along the dotted prediction.
-- Select a planet to change its mass or its note. Adjust star mass to change the system's motion.
+- Set **Note lines** from 1 to 12. The rays spread evenly around the moving star; each crossing can play a note. One upward ray is the default.
+- Add up to **32 planets**. Select a planet to change its mass or its note. Adjust star mass to change the system's motion.
 - Press **Start listening** to enable sound. Startup is silent; note-line crossings make the music. The same button then mutes or unmutes.
 - Cycle the scale button through major pentatonic, minor pentatonic and whole tone. The six-position Note slider retunes the selected planet.
 - Use **Pause**, **Reset scene** or **Clear sky** to start another experiment.
@@ -45,6 +46,8 @@ The existing suite covers gravity and merger invariants, prediction, timing, mus
 ```sh
 python3 tests/run-macos.py
 ```
+
+For an optional local physics/prediction benchmark (not a CI timing threshold), run `node tests/performance.cjs`.
 
 The fixture does not render the page or play audio. For interface changes, also check desktop and phone layouts, pointer/touch launches, keyboard controls, repeated selections without page jumps, pause/reset/clear, sound initialization and mute, reduced motion and the browser console. Distinguish offline audio measurements from listening on a physical speaker.
 
