@@ -1,0 +1,18 @@
+/* Calibrated local synthesis. No sound is created until an explicit gesture. */
+(function(root){
+'use strict';
+const NOTES=[523.25,587.33,659.25,783.99,880,1046.5],MAX_VOICES=3,CEILING=.6;
+function limiterCurve(){const a=new Float32Array(8192);for(let i=0;i<a.length;i++){const x=i/(a.length-1)*2-1;a[i]=CEILING*Math.tanh(x/CEILING);}return a;}
+function graph(context,destination){const music=context.createGain(),preview=context.createGain(),filter=context.createBiquadFilter(),limiter=context.createWaveShaper(),analyser=context.createAnalyser();music.gain.value=preview.gain.value=0;filter.type='highpass';filter.frequency.value=160;limiter.curve=limiterCurve();limiter.oversample='2x';analyser.fftSize=2048;music.connect(filter);preview.connect(filter);filter.connect(limiter);limiter.connect(analyser);analyser.connect(destination);return {music,preview,analyser};}
+function note(context,bus,n,preview=false,when=context.currentTime){const env=context.createGain(),tone=context.createBiquadFilter();tone.type='lowpass';tone.frequency.value=3500;env.gain.setValueAtTime(0,when);env.gain.linearRampToValueAtTime(.6,when+.015);env.gain.setValueAtTime(.6,when+(preview?.28:.065));env.gain.exponentialRampToValueAtTime(.006,when+(preview?.85:.85));env.gain.linearRampToValueAtTime(0,when+.95);tone.connect(env);env.connect(bus);const oscillators=[.65,.25,.1].map((weight,i)=>{const o=context.createOscillator(),g=context.createGain();o.type='sine';o.frequency.value=NOTES[n]*(i+1);g.gain.value=weight;o.connect(g);g.connect(tone);o.start(when);o.stop(when+1);return {o,g};});const ended=new Promise(resolve=>{oscillators[0].o.onended=()=>{oscillators.forEach(({o,g})=>{o.disconnect();g.disconnect();});tone.disconnect();env.disconnect();resolve();};});return ended;}
+function create(onState=()=>{}){let context=null,nodes=null,voices=0,enabled=false,muted=false,paused=false,hidden=false,volume=.38,route='default';
+ function levels(){if(!nodes)return;const t=context.currentTime;nodes.music.gain.setTargetAtTime(muted||paused||hidden?0:volume,t,.025);nodes.preview.gain.setTargetAtTime(muted||hidden?0:volume,t,.025);}
+ async function enable(){try{if(!context||context.state==='closed'){const AC=root.AudioContext||root.webkitAudioContext;if(!AC)throw Error('Unsupported');context=new AC({latencyHint:'interactive'});nodes=graph(context,context.destination);context.onstatechange=()=>onState();}
+  // Playback is appropriate for this music toy; it does not request microphone access.
+  try{if(root.navigator?.audioSession){root.navigator.audioSession.type='playback';route='playback';}}catch{route='default';}
+  const resume=context.resume();await resume;enabled=context.state==='running';if(enabled)muted=false;levels();onState();return enabled;}catch{enabled=false;onState();return false;}}
+ function play(n,preview=false){if(!enabled||muted||hidden||(!preview&&paused)||context.state!=='running'||voices>=MAX_VOICES)return false;voices++;note(context,preview?nodes.preview:nodes.music,n,preview,context.currentTime+(preview?.08:0)).finally(()=>voices--);return true;}
+ return {enable,play,set(options){({muted=muted,paused=paused,hidden=hidden,volume=volume}=options);levels();onState();},status(){return {enabled,muted,paused,hidden,volume,state:context?.state||'not-started',route,voices};},signal(){if(!nodes)return {rms:0,peak:0};const a=new Float32Array(nodes.analyser.fftSize);nodes.analyser.getFloatTimeDomainData(a);let sum=0,peak=0;for(const x of a){sum+=x*x;peak=Math.max(peak,Math.abs(x));}return {rms:Math.sqrt(sum/a.length),peak};}};
+}
+root.OrbitAudio={NOTES,MAX_VOICES,CEILING,graph,note,limiterCurve,create};
+})(globalThis);

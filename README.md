@@ -1,44 +1,40 @@
 # Orbit
 
-A little gravity. A little music. A static browser playground for launching independent planets around one fixed star.
+A small, local-synthesis browser instrument. Tap empty space for a circular starting velocity, or drag to launch. Select a planet to change its mass. Every crossing of the upward line from the moving star plays a pentatonic note.
 
-Play at **https://syymza.github.io/musical-planets/**.
+No dependencies, accounts, network calls, tracking or runtime AI. Serve this directory with any static server. Audio requires **Start listening** or **Test sound**; enabling sound is silent. Pause gates the music bus, while the optional test note remains available. Reset restores the chosen preset. Clear removes planets.
 
-## Play
+## Gravity model
 
-- Tap **Start listening** to enable audio and send a gentle test note. **Test sound** can also enable or resume audio and works while the simulation is paused. It does not advance time or create a fake ray crossing.
-- Tap empty space for a circular orbit. Drag from a spot or from an existing planet and release to launch: the arrow shows velocity, with longer arrows meaning faster launches. The dotted prediction follows the next eight simulation seconds, ending early at collision or escape.
-- Try **In balance**, **Ellipses**, and **Wild paths**. Wild paths demonstrates a starfall and an escape alongside a bound orbit.
-- Each crossing of the upward note ray, in either direction and outside the star, produces a C major pentatonic pluck.
-- Use pause/resume, mute, listening level, reset, and clear. Up to eight active planets are supported.
-- Keyboard: Tab to a planet; arrow keys apply small velocity impulses; Delete/Backspace removes it. All buttons and volume are native keyboard controls.
-- System reduced-motion preferences suppress trails and pulses automatically. There is no extra visuals checkbox.
+All bodies, including the star, move under pairwise softened Newtonian gravity in 2D. G = 1; softening length = 0.012; fixed velocity-Verlet step = 1/600 second. The camera follows the center of mass; the small cross marks it. Planet radius scales with the cube root of mass. Sizes are exaggerated for interaction. Starting star mass can be adjusted from 0.5 to 3, ordinary planet mass from 0.005 to 0.15, and the total mass budget is 4.2. Merged masses are preserved even when larger than a normal control range.
 
-If the test note is silent, check the phone's media volume and selected audio output. The app reports zero volume, mute, paused time, and a browser-suspended audio context separately. A running audio engine and a generated signal do not establish that a physical speaker is audible. Physical iPhone/Safari listening remains to be checked; no particular phone setting is assumed to be the cause of silence.
+Finite bodies merge on contact. A swept-segment collision estimate avoids fast bodies passing through each other between steps. The survivor preserves total mass, linear momentum and center of mass; volume is additive. Relative orbital angular momentum is retained as internal spin. Relative translational kinetic energy becomes stored heat. Spin and heat are bookkeeping, not visible rotation or thermodynamics. Changing the number of bodies also changes the modeled binding energy, so mechanical energy is not conserved at mergers. This is a simplified inelastic merger model, not a precision astronomical integrator.
 
-## Model
+The star survives a star/planet merger; otherwise the heavier body keeps its note and color. No artificial note is emitted for the discontinuous merger jump. Off-screen bodies remain active. Mass edits, launches, velocity nudges and deletions are external interventions, so conservation claims apply between interventions and away from mergers.
 
-This is a simplified Newtonian test-particle model, not an N-body simulation. One stationary star exerts inverse-square gravity (`GM = 1` in dimensionless units). Planet mass cancels from this model's acceleration, so there is no mass slider. Planets do not pull on one another. There are no slingshots between moving bodies, relativistic corrections, or physical distance/time labels.
+Aiming freezes the full system. The dotted path runs the same all-body integrator for up to three simulated seconds and ends at the first merger involving the aimed body. Release commits that starting velocity. The note line is relative to the moving star. Half-open crossing endpoints avoid duplicate notes. Frame timing uses an accumulator; pause, tab hiding and stalls over 100 ms discard backlog.
 
-Velocity Verlet integration advances at **1/480 simulation second** per fixed step, independently of rendering. The finite star has radius 0.16; collision is detected against a 0.19-radius surface, including segment intersection to prevent tunneling. Positive-energy planets moving outward beyond radius 3.2 are marked escaped. Negative-energy wide paths remain bound even when outside the view. Prediction uses the identical integrator and terminal criteria.
+## Audio
 
-Crossings are segment/ray intersections with half-open endpoint handling, so landing on the line triggers once and departing it does not repeat. Pause, hidden tabs, and stalls longer than 100ms suspend simulation time and discard the frame backlog. This favors stable interactive behavior over catching up to wall time.
+The former default output was weak: the master stage multiplied the 38% setting by another 0.42 and the pluck had a short, low envelope. The revised voices use C5–C6 fundamentals and weighted second/third harmonics, with a slightly longer attack/body for small speakers. A 160 Hz high-pass and 3.5 kHz voice low-pass shape the output. Three concurrent voices are allowed. A bounded soft limiter follows the buses; default volume remains 38%.
 
-Trails sample equal simulation-time intervals: greater spacing near periapsis shows higher speed. Their fading and orbit shape are illustrative. Audio voices are limited to eight and use the existing moderate gain, a compressor, and short pluck envelopes. Audio context creation/resume happens in the explicit click handler; the preview is delayed 80ms to allow the existing gain fade to settle. Preview has a separate volume-controlled bus so it can be tested while time is paused. The small signal indicator samples the post-compressor Web Audio graph, not the physical device output.
+Measured in Chrome's OfflineAudioContext using the production graph at 48 kHz:
 
-## Run and test
+| Render | Peak | RMS, first 250 ms |
+| --- | ---: | ---: |
+| Previous highest note, default level | 0.0420 | 0.02125 |
+| Revised G5 musical note, default level | 0.2080 | 0.08584 |
+| Optional G5 test, default level | 0.2080 | 0.11514 |
+| Revised C5/E5/A5 together, maximum level | 0.5599 | 0.29273 |
 
-Open `index.html` or serve this directory with any static HTTP server. No build or install step is required. GitHub Pages serves the root of `main`. HTML/CSS/JavaScript/SVG are local; no backend, accounts, analytics, external APIs, external assets, or runtime AI.
+These are digital amplitude measurements, not loudness readings from a phone speaker. Browser live preview also reached peak 0.2077 and RMS 0.1187. Where supported, the feature-detected Audio Session API requests the `playback` route, appropriate for a music toy without microphone capture. Unsupported browsers retain their normal route. Actual physical iPhone playback remains unverified. The app cannot control hardware volume, Bluetooth routing or browser/OS audio behavior.
 
-Run `node tests/gravity.js`. On macOS without Node, `python3 tests/run-macos.py` uses the system JavaScriptCore engine. Tests execute the production physics module and the actual application handlers in a deterministic DOM/audio/frame harness.
+## Verification
 
-Measured regression results:
+`python3 tests/run-macos.py` runs the dependency-free JavaScript checks through macOS JavaScriptCore. The latest run passes 831 assertions across 10 test groups: barycentric motion, circular/eccentric/multi-body conservation, mass effects, merger invariants, swept collisions, numerical extremes, prediction equality, moving-star crossings, frame-rate independence and retained distant bodies.
 
-- 100 circular periods: maximum relative energy drift **4.76e-12** (tolerance 1e-4).
-- 60 eccentric periods, periapsis 0.45 / apoapsis 2.3: drift **2.98e-5**, or **0.003%** (tolerance 0.1%).
-- 30 near-star eccentric periods, periapsis 0.2 / apoapsis 2.6: drift **9.16e-4**, or **0.092%** (tolerance 0.1%). These bounds describe the tested paths, not every possible launch.
-- 30/60/144 Hz rendering: identical states within 1e-12 and identical crossing counts after 30 seconds.
-- Predicted samples match independently advanced paths within 1e-12, including collision/escape termination.
-- Also checks angular momentum, reversibility, collisions without tunneling, wide bound paths, both crossing directions, no duplicate endpoints, pause/resume, hidden tabs, mute/no replay, launch gestures, keyboard impulses, and reduced motion.
+Over 20 seconds, maximum relative energy drift in the eccentric two-body and three-body cases was 0.000724% and 0.000531%. Circular two-body relative drift over 30 seconds was 3.16e-13. The identical fixed-step results were checked at 30, 60 and 144 display Hz.
 
-Browser QA verifies the real DOM, canvas, input events, context state, and generated audio signal. Browser touch emulation is not a physical iPhone test. Recordings are silent motion demonstrations; they do not prove audio listening or measure speaker/Bluetooth latency.
+Browser checks cover 1440 px desktop, 390 px and 320 px mobile widths, touch drag/prediction/release, mass controls at their extremes, visible collision/merger and preserved total mass, pause, silent audio enabling, optional test sound while paused, reduced-motion handling, and no console warnings/errors. Browser emulation and digital audio rendering do not establish physical iPhone speaker audibility.
+
+Keyboard: Tab to a planet; arrow keys nudge velocity, Delete removes it. System reduced-motion preference suppresses trails and pulses. The simulation still moves; Pause stops time.

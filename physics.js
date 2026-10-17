@@ -1,54 +1,27 @@
-/* Dimensionless Newtonian test particles; fixed star, GM = 1. */
+/* 2D softened Newtonian N-body dynamics with finite, merging bodies. */
 (function(root){
-  'use strict';
-  const GM=1, DT=1/480, STAR_RADIUS=.16, COLLISION_RADIUS=.19, ESCAPE_RADIUS=3.2;
-  function body(x,y,vx,vy){return {x,y,vx,vy,state:'orbiting'};}
-  function energy(p){return (p.vx*p.vx+p.vy*p.vy)/2-GM/Math.hypot(p.x,p.y);}
-  function circular(r,angle=0,direction=1){const v=Math.sqrt(GM/r)*direction;return body(Math.sin(angle)*r,-Math.cos(angle)*r,Math.cos(angle)*v,Math.sin(angle)*v);}
-  function ellipse(peri,apo,angle=0){
-    const p=body(0,-peri,Math.sqrt(GM*(2/peri-2/(peri+apo))),0),c=Math.cos(angle),s=Math.sin(angle);
-    return body(p.x*c-p.y*s,p.x*s+p.y*c,p.vx*c-p.vy*s,p.vx*s+p.vy*c);
-  }
-  function rayCrossing(x0,y0,x1,y1){
-    if(!((x0<0&&x1>=0)||(x0>0&&x1<=0)))return null;
-    const fraction=-x0/(x1-x0),y=y0+(y1-y0)*fraction;
-    return y < -COLLISION_RADIUS ? {fraction,y} : null;
-  }
-  function hitFraction(x,y,nx,ny){
-    const c=x*x+y*y-COLLISION_RADIUS*COLLISION_RADIUS;if(c<=0)return 0;
-    const dx=nx-x,dy=ny-y,a=dx*dx+dy*dy;if(a===0)return null;
-    const b=2*(x*dx+y*dy),d=b*b-4*a*c;if(d<0)return null;
-    const t=(-b-Math.sqrt(d))/(2*a);return t>=0&&t<=1?t:null;
-  }
-  function step(p,dt=DT){
-    if(p.state!=='orbiting')return {crossing:null,outcome:null};
-    const x=p.x,y=p.y,r=Math.hypot(x,y);
-    if(r<=COLLISION_RADIUS){p.state='collision';return {crossing:null,outcome:'collision'};}
-    const factor=-GM/(r*r*r),ax=x*factor,ay=y*factor;
-    const nx=x+p.vx*dt+.5*ax*dt*dt,ny=y+p.vy*dt+.5*ay*dt*dt;
-    const hit=hitFraction(x,y,nx,ny),crossing=rayCrossing(x,y,nx,ny);
-    if(hit!==null){p.x=x+(nx-x)*hit;p.y=y+(ny-y)*hit;p.state='collision';return {crossing:crossing&&crossing.fraction<hit?crossing:null,outcome:'collision'};}
-    const nr=Math.hypot(nx,ny),nf=-GM/(nr*nr*nr);
-    p.x=nx;p.y=ny;p.vx+=(ax+nx*nf)*dt*.5;p.vy+=(ay+ny*nf)*dt*.5;
-    if(nr>=ESCAPE_RADIUS&&nx*p.vx+ny*p.vy>0&&energy(p)>=0){p.state='escaped';return {crossing,outcome:'escaped'};}
-    return {crossing,outcome:null};
-  }
-  function predict(p,seconds=8,stride=4){
-    const copy={...p,state:'orbiting'},points=[{x:copy.x,y:copy.y}];let outcome=null;
-    for(let i=0;i<Math.ceil(seconds/DT);i++){
-      const event=step(copy);if(i%stride===stride-1||event.outcome)points.push({x:copy.x,y:copy.y});
-      if(event.outcome){outcome=event.outcome;break;}
-    }
-    return {points,outcome};
-  }
-  function clock(){let accumulator=0;return {
-    reset(){accumulator=0;},
-    advance(seconds,active=true){
-      // Suspend time across pauses, hidden tabs and long stalls; never replay a backlog.
-      if(!active||!Number.isFinite(seconds)||seconds<0||seconds>.1){accumulator=0;return 0;}
-      accumulator+=seconds;const steps=Math.floor((accumulator+1e-10)/DT);accumulator-=steps*DT;return steps;
-    }
-  };}
-  const api={GM,DT,STAR_RADIUS,COLLISION_RADIUS,ESCAPE_RADIUS,body,energy,circular,ellipse,rayCrossing,step,predict,clock};
-  root.OrbitPhysics=api;if(typeof module!=='undefined')module.exports=api;
+'use strict';
+const G=1,DT=1/600,SOFTENING=.012,MASS_BUDGET=4.2;
+function body(id,x,y,vx,vy,mass=.012,isStar=false){return {id,x,y,vx,vy,mass,isStar,radius:(isStar?.16:.06)*Math.cbrt(mass/(isStar?1:.012)),spin:0,heat:0,state:'orbiting'};}
+const active=system=>system.filter(p=>p.state==='orbiting');
+function center(system){let mass=0,x=0,y=0,vx=0,vy=0;for(const p of active(system)){mass+=p.mass;x+=p.mass*p.x;y+=p.mass*p.y;vx+=p.mass*p.vx;vy+=p.mass*p.vy;}return {mass,x:x/mass,y:y/mass,vx:vx/mass,vy:vy/mass};}
+function recenter(system){const c=center(system);for(const p of active(system)){p.x-=c.x;p.y-=c.y;p.vx-=c.vx;p.vy-=c.vy;}return system;}
+function changeMass(p,mass){p.radius*=Math.cbrt(mass/p.mass);p.mass=mass;}
+function accelerations(ps){const a=ps.map(()=>({x:0,y:0}));for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++){const dx=ps[j].x-ps[i].x,dy=ps[j].y-ps[i].y,d2=dx*dx+dy*dy+SOFTENING*SOFTENING,f=G/(d2*Math.sqrt(d2));a[i].x+=dx*f*ps[j].mass;a[i].y+=dy*f*ps[j].mass;a[j].x-=dx*f*ps[i].mass;a[j].y-=dy*f*ps[i].mass;}return a;}
+function totals(system){const ps=active(system);let kinetic=0,potential=0,px=0,py=0,angular=0;for(const p of ps){kinetic+=p.mass*(p.vx*p.vx+p.vy*p.vy)/2;px+=p.mass*p.vx;py+=p.mass*p.vy;angular+=p.mass*(p.x*p.vy-p.y*p.vx)+p.spin;}for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++)potential-=G*ps[i].mass*ps[j].mass/Math.sqrt((ps[j].x-ps[i].x)**2+(ps[j].y-ps[i].y)**2+SOFTENING**2);return {kinetic,potential,energy:kinetic+potential,px,py,angular,...center(ps)};}
+function merge(a,b){const keep=a.isStar?a:b.isStar?b:a.mass>=b.mass?a:b,drop=keep===a?b:a,mass=a.mass+b.mass,x=(a.x*a.mass+b.x*b.mass)/mass,y=(a.y*a.mass+b.y*b.mass)/mass,vx=(a.vx*a.mass+b.vx*b.mass)/mass,vy=(a.vy*a.mass+b.vy*b.mass)/mass;
+ const spin=a.spin+b.spin+a.mass*((a.x-x)*(a.vy-vy)-(a.y-y)*(a.vx-vx))+b.mass*((b.x-x)*(b.vy-vy)-(b.y-y)*(b.vx-vx));
+ const dissipated=.5*a.mass*b.mass/mass*((a.vx-b.vx)**2+(a.vy-b.vy)**2),radius=Math.cbrt(a.radius**3+b.radius**3),heat=a.heat+b.heat+dissipated;
+ Object.assign(keep,{x,y,vx,vy,mass,radius,spin,heat});drop.state='merged';return {keep,drop,dissipated,x,y};}
+function rayCrossing(x0,y0,x1,y1,minimum=0){if(!((x0<0&&x1>=0)||(x0>0&&x1<=0)))return null;const fraction=-x0/(x1-x0),y=y0+(y1-y0)*fraction;return y < -minimum?{fraction,y}:null;}
+function impact(a,b,na,nb){const x=a.x-b.x,y=a.y-b.y,r=a.radius+b.radius,c=x*x+y*y-r*r;if(c<=1e-12)return 0;const dx=(na.x-nb.x)-x,dy=(na.y-nb.y)-y,A=dx*dx+dy*dy;if(A===0)return null;const B=2*(x*dx+y*dy),d=B*B-4*A*c;if(d<0)return null;const f=(-B-Math.sqrt(d))/(2*A);return f>=0&&f<=1?f:null;}
+function drift(ps,dt){const a=accelerations(ps);return ps.map((p,i)=>({...p,x:p.x+p.vx*dt+.5*a[i].x*dt*dt,y:p.y+p.vy*dt+.5*a[i].y*dt*dt}));}
+function move(ps,dt,events,offset){const old=ps.map(p=>({...p})),a=accelerations(ps),next=drift(ps,dt),b=accelerations(next);for(let i=0;i<ps.length;i++){ps[i].x=next[i].x;ps[i].y=next[i].y;ps[i].vx+=(a[i].x+b[i].x)*dt*.5;ps[i].vy+=(a[i].y+b[i].y)*dt*.5;}
+ const index=ps.findIndex(p=>p.isStar);if(index<0)return;const star=ps[index],previous=old[index];for(let i=0;i<ps.length;i++){if(i===index)continue;const cross=rayCrossing(old[i].x-previous.x,old[i].y-previous.y,ps[i].x-star.x,ps[i].y-star.y,star.radius+ps[i].radius);if(cross)events.crossings.push({body:ps[i],...cross,time:offset+cross.fraction*dt});}}
+function stepSystem(system,dt=DT){const events={crossings:[],mergers:[]};function advance(remaining,offset){const ps=active(system);if(!ps.length||remaining<=1e-14)return;const next=drift(ps,remaining);let earliest=2,pair=null;for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++){const f=impact(ps[i],ps[j],next[i],next[j]);if(f!==null&&f<earliest){earliest=f;pair=[ps[i],ps[j]];}}
+ if(!pair){move(ps,remaining,events,offset);return;}const elapsed=remaining*earliest;if(elapsed>0)move(ps,elapsed,events,offset);events.mergers.push(merge(...pair));advance(remaining-elapsed,offset+elapsed);}
+ advance(dt,0);return events;}
+function predict(system,targetId,seconds=3,stride=6){const ps=active(system).map(p=>({...p})),target=ps.find(p=>p.id===targetId);if(!target)return {points:[],merger:false};const points=[{x:target.x,y:target.y}];for(let i=0;i<Math.ceil(seconds/DT);i++){const event=stepSystem(ps);const collision=event.mergers.find(e=>e.keep.id===targetId||e.drop.id===targetId);if(i%stride===stride-1||collision)points.push(collision?{x:collision.x,y:collision.y}:{x:target.x,y:target.y});if(collision)return {points,merger:true};}return {points,merger:false};}
+function clock(){let accumulator=0;return {reset(){accumulator=0;},advance(seconds,on=true){if(!on||!Number.isFinite(seconds)||seconds<0||seconds>.1){accumulator=0;return 0;}accumulator+=seconds;const n=Math.floor((accumulator+1e-10)/DT);accumulator-=n*DT;return n;}};}
+const api={G,DT,SOFTENING,MASS_BUDGET,body,active,center,recenter,changeMass,accelerations,totals,merge,rayCrossing,stepSystem,predict,clock};root.OrbitPhysics=api;if(typeof module!=='undefined')module.exports=api;
 })(globalThis);
