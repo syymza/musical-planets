@@ -1,0 +1,32 @@
+name: Validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check local site and documentation links
+        run: python3 scripts/check-site.py
+      - name: Check JavaScript syntax
+        run: |
+          node --check app.js
+          node --check audio.js
+          node --check physics.js
+      - name: Run physics and interface checks
+        run: node tests/run-node.cjs
