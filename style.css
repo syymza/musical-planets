@@ -8,4 +8,7 @@
 
 .planet::after{background:transparent;box-shadow:none}
 
-.mass-controls{margin-top:22px;padding:18px 0 0;border-top:1px solid var(--line)}.mass-controls .label{margin:14px 0 3px;display:flex;justify-content:space-between}.mass-controls .label:first-child{margin-top:0}.mass-controls output{color:var(--gold);font-variant-numeric:tabular-nums}.mass-controls select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:7px;background:#1c2430;color:var(--ink);font-size:12px}.mass-controls input{margin:8px 0 2px;min-height:24px}input:focus-visible{outline:2px solid var(--gold);outline-offset:3px}.line-label{left:calc(50% + 8px)}@media(min-width:901px){main{align-items:start}.universe{position:sticky;top:25px}.sidebar{padding-bottom:35px}}
+.mass-controls{margin-top:22px;padding:18px 0 0;border-top:1px solid var(--line)}.mass-controls .label{margin:14px 0 3px;display:flex;justify-content:space-between}.mass-controls .label:first-child{margin-top:0}.mass-controls output{color:var(--gold);font-variant-numeric:tabular-nums}.mass-controls input{margin:8px 0 2px;min-height:24px}input:focus-visible{outline:2px solid var(--gold);outline-offset:3px}.line-label{left:calc(50% + 8px)}@media(min-width:901px){main{align-items:start}.universe{position:sticky;top:25px}.sidebar{padding-bottom:35px}}
+
+/* Planet editing follows canvas or keyboard selection. */
+.planet-mass{margin-top:20px}.planet-mass[hidden]{display:none}.planet-mass .label{margin:0 0 3px}
