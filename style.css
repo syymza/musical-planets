@@ -12,3 +12,23 @@
 
 /* Planet editing follows canvas or keyboard selection. */
 .planet-mass{margin-top:20px}.planet-mass[hidden]{display:none}.planet-mass .label{margin:0 0 3px}
+
+/* Moving planets must not become scroll anchors after pointer selection. */
+.stage{overflow-anchor:none}.universe{align-self:start}
+
+.note-control{margin-top:16px}.stat{gap:8px;flex-wrap:wrap}.scale-switch{font:inherit;min-height:36px;border:1px solid var(--line);border-radius:20px;background:transparent;color:var(--gold);padding:7px 9px;white-space:nowrap}.scale-switch:hover{border-color:var(--gold)}
+
+.label[for=volume]{margin:16px 0 0}
+/* Fit the instrument on ordinary laptops; smaller/zoomed views keep natural flow. */
+@media(min-width:1000px) and (min-height:650px){
+ .shell{min-height:100svh;padding:22px 36px 16px;display:flex;flex-direction:column}
+ header,footer{flex:none}main{flex:1;min-height:0;padding-top:14px;gap:32px;grid-template-columns:minmax(0,1fr) 300px;align-items:start}
+ .universe{position:relative;top:auto}.intro{top:4px;left:0;right:0;text-align:center}
+ .stage{max-width:min(100%,calc(100svh - 175px))}.stage-hint{max-width:580px;margin:0 auto;font-size:11px}.line-label{top:82px}
+ .sidebar{padding:0}.subtitle,.description,.guide,.divider{display:none}
+ .mass-controls{margin-top:14px;padding-top:12px}.mass-controls .label{margin:8px 0 2px}.mass-controls .label:first-child{margin-top:0}
+ .sidebar input.volume{min-height:24px;margin:4px 0 0}.planet-mass{margin-top:12px}.note-control{margin-top:10px}
+ .tools{margin:14px 0 0}.label[for=volume]{margin:12px 0 0}.text-actions{margin-top:8px}.text-button{min-height:32px;padding:6px 0}
+ .stat{margin-top:10px;gap:6px}.scale-switch{min-height:34px;padding:5px 8px}.outcome{margin-top:6px;min-height:32px}
+ footer{margin-top:14px}
+}

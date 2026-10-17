@@ -4,8 +4,8 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#10151d"><meta name="description" content="A little universe you can launch. Shape real gravity-driven orbits and let their crossings make music.">
 <title>Orbit · a little gravity, a little music</title>
-<link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./style.css?v=20261017-direct-controls">
-<script src="./physics.js?v=20261017-direct-controls" defer></script><script src="./audio.js?v=20261017-direct-controls" defer></script><script src="./app.js?v=20261017-direct-controls" defer></script>
+<link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./style.css?v=20261017-music-controls">
+<script src="./physics.js?v=20261017-music-controls" defer></script><script src="./audio.js?v=20261017-music-controls" defer></script><script src="./app.js?v=20261017-music-controls" defer></script>
 </head>
 <body><div class="shell">
 <header><div class="wordmark"><span class="symbol" aria-hidden="true">◌</span> orbit</div><span class="edition">A little gravity. A little music.</span></header>
@@ -14,10 +14,10 @@
 <p class="stage-hint"><span>Tap</span> for a circular orbit. <span>Drag &amp; release</span> to launch. Follow the dotted path.</p></section>
 <aside class="sidebar" aria-label="Sound and scene controls"><h2 class="subtitle">A melody with momentum.</h2><p class="description">One star. A few tiny worlds.<br>Gravity shapes their paths.<br>The note line makes them sing.</p>
 <button class="primary" id="start">♪ &nbsp; Start listening</button>
-<div class="mass-controls"><label class="label" for="starMass">Star mass <output id="starValue">1.00</output></label><input class="volume" id="starMass" type="range" min="0.5" max="3" step="0.01" value="1"><div class="planet-mass" id="planetMassControls" hidden><label class="label" for="planetMass"><span><span id="planetName"></span> planet mass</span><output id="planetValue">0.012</output></label><input class="volume" id="planetMass" type="range" min="0.005" max="0.15" step="0.001" value="0.012" disabled></div></div><div class="tools"><button class="tool" id="pause" aria-pressed="false">Ⅱ &nbsp; Pause</button><button class="tool" id="add">＋ &nbsp; Add planet</button></div>
-<label class="label" for="volume" style="margin:20px 0 0">Listening level</label><input class="volume" id="volume" type="range" min="0" max="100" value="38" aria-label="Volume">
+<div class="mass-controls"><label class="label" for="starMass">Star mass <output id="starValue">1.00</output></label><input class="volume" id="starMass" type="range" min="0.5" max="3" step="0.01" value="1"><div class="planet-mass" id="planetMassControls" hidden><label class="label" for="planetMass"><span><span id="planetName"></span> planet mass</span><output id="planetValue">0.012</output></label><input class="volume" id="planetMass" type="range" min="0.005" max="0.15" step="0.001" value="0.012" disabled><div class="note-control"><label class="label" for="planetNote">Note <output id="noteValue">C5</output></label><input class="volume" id="planetNote" type="range" min="0" max="5" step="1" value="0" disabled aria-valuetext="No planet selected"></div></div></div><div class="tools"><button class="tool" id="pause" aria-pressed="false">Ⅱ &nbsp; Pause</button><button class="tool" id="add">＋ &nbsp; Add planet</button></div>
+<label class="label" for="volume">Listening level</label><input class="volume" id="volume" type="range" min="0" max="100" value="38" aria-label="Volume">
 <div class="text-actions"><button class="text-button" id="reset">Reset scene</button><button class="text-button" id="clear">Clear sky</button></div>
-<div class="stat"><span id="count">3 planets · C pentatonic</span><span class="live-note" id="lastNote">Waiting to play</span></div>
+<div class="stat"><span id="count">3 planets</span><button id="scale" class="scale-switch" aria-label="C major pentatonic. Change scale">Major pent. ↻</button><span class="live-note" id="lastNote">Waiting to play</span></div>
 <div class="outcome" id="outcome" role="status" aria-live="polite">Small worlds. Real curved paths.</div>
 <div class="divider"></div><div class="guide"><p><b>Closer means faster.</b><br>Watch the trail stretch near the star.</p><p><b>Try a different launch.</b><br>Heavy worlds, close passes, or a collision.</p></div>
 <p class="sr-only" id="announcement" role="status" aria-live="polite"></p>
