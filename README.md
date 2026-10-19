@@ -15,7 +15,7 @@ A small browser instrument where gravity makes the rhythm. Add tiny worlds, shap
 - Cycle the scale button through major pentatonic, minor pentatonic and whole tone. The six-position Note slider retunes the selected planet.
 - Use **Pause**, **Reset scene** or **Clear sky** to start another experiment.
 
-On desktop (viewport at least 901 px, primary pointer supports fine control and hover), Tab to the sky and use **[ / ]** for previous/next planet. Selection wraps in creation order. The shortcut works only inside the sky, never in a slider, input or editable field, and is disabled on mobile/coarse-pointer layouts. Off-screen bodies keep simulating and remain selectable through small edge arrows, including in the keyboard cycle.
+With a primary pointer that supports fine control and hover, at any viewport width, Tab to the sky and use **[ / ]** for previous/next planet. Selection wraps in creation order. The shortcut works only inside the sky, never in a slider, input or editable field, and is disabled on mobile/coarse-pointer layouts. Off-screen bodies keep simulating and remain selectable through small edge arrows, including in the keyboard cycle.
 
 The camera gently fits the scene around the star, with a zoom-out cap of twice the original view. A distant escape gets an edge arrow instead of shrinking the entire scene indefinitely. Select an arrow to edit that planet; it does not teleport or relaunch it. Framing freezes during aiming, and resizing cancels the current aim safely. Reset restores the starting view; Clear eases inward.
 
