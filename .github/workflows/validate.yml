@@ -26,6 +26,7 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check app.js
+          node --check keyboard-help.js
           node --check camera.js
           node --check audio.js
           node --check physics.js
