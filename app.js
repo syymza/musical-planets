@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 const P=OrbitPhysics,A=OrbitAudio,C=OrbitCamera,$=id=>document.getElementById(id),stage=$('stage'),canvas=$('sky'),ctx=canvas.getContext('2d'),layer=$('planets');
-const colors=['#f1be89','#a7bfcf','#c4b9e6','#a8c8ac','#e4a8a5','#d8ce95'],motion=matchMedia('(prefers-reduced-motion: reduce)'),timer=P.clock(),desktopKeys=matchMedia('(min-width: 901px) and (hover: hover) and (pointer: fine)');
+const colors=['#f1be89','#a7bfcf','#c4b9e6','#a8c8ac','#e4a8a5','#d8ce95'],motion=matchMedia('(prefers-reduced-motion: reduce)'),timer=P.clock(),desktopKeys=matchMedia('(hover: hover) and (pointer: fine)');
 let system=[],preset='balance',paused=false,calm=motion.matches,size=600,scale=80,last=null,aim=null,serial=0,noteSerial=0,scaleIndex=0,lineCount=1,rayFlashes=Array(1).fill(0),selected=null,simulationTime=0,noteCount=0,age=0,camera=C.create(),bursts=[];
 const nameFor=n=>A.SCALES[scaleIndex].names[n],planetLabel=p=>`${p.offscreen?'Offscreen ':''}${nameFor(p.n)} planet. Enter edits mass; arrows change velocity; Delete removes it.`;
 const audio=A.create(soundUI),announce=text=>$('announcement').textContent=text,planets=()=>P.active(system).filter(p=>!p.isStar),star=()=>system.find(p=>p.isStar),screen=p=>C.toScreen(p,camera,size);
