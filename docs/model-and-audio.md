@@ -2,7 +2,7 @@
 
 ## Gravity
 
-All bodies, including the star, move under pairwise softened Newtonian gravity in 2D. The model uses G = 1, softening length 0.012 and a fixed velocity-Verlet step of 1/600 second. The camera follows the center of mass; the small cross marks it. Sizes are exaggerated for interaction, and radius scales with the cube root of mass.
+All bodies, including the star, move under pairwise softened Newtonian gravity in 2D. The model uses G = 1, softening length 0.012 and a fixed velocity-Verlet step of 1/600 second. The camera gently follows the star and fits the active scene, capped at twice the original view width. The small cross still marks the center of mass when it is in view. Off-screen planets remain active and have selectable edge arrows. Sizes are exaggerated for interaction, and radius scales with the cube root of mass.
 
 The controls allow starting star mass from 0.5 to 3 and ordinary planet mass from 0.005 to 0.15, with a total mass budget of 4.2. Mergers preserve mass even when the result exceeds an ordinary control range. Up to 32 planets may be active. With a star of mass 3 and 32 default-mass planets, total mass is 3.384, below the unchanged budget of 4.2. Heavier mass edits can exhaust the budget before the count limit; remove a body or reduce mass to add more.
 
@@ -17,6 +17,12 @@ Aiming freezes the full system. The dotted path uses the same all-body integrato
 Frame timing uses an accumulator. Pause, tab hiding and stalls longer than 100 ms discard backlog rather than simulating a burst of missed time.
 
 Changing line count only replaces the rays: it does not move planets, advance time, play a note or retain a stale flash. Reset and Clear retain the chosen line count, and clear crossing pulses. Rays and planets pulse on real crossings; reduced motion suppresses those pulses.
+
+## Camera
+
+The view half-width ranges from 3.804 to 7.609 model units, with 15% fit padding. Zoom-out eases over a 0.45-second time constant and zoom-in over 1.2 seconds. A small fit hysteresis avoids pumping with tiny orbital changes. A distant body can request the capped view but cannot force unlimited zoom-out or move the camera away from the star.
+
+Screen-to-world mapping is the inverse of rendering. Position and zoom freeze together during aiming; resizing cancels that aim and reprojects the same bodies. Reset restores the curated starting view. Clear leaves the star and smoothly restores the baseline framing. Arrow selection changes selection only, never physical position or velocity.
 
 ## Sound
 

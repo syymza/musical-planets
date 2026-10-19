@@ -6,7 +6,7 @@ const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
 const read = name => fs.readFileSync(path.join(root, name), 'utf8');
 const testFiles = Object.fromEntries(
-  ['physics.js', 'app.js', 'audio.js', 'tests/interface.js'].map(name => [name, read(name)])
+  ['physics.js','camera.js', 'app.js', 'audio.js', 'tests/interface.js'].map(name => [name, read(name)])
 );
 const result = vm.runInNewContext(
   read('tests/gravity.js') + '\nglobalThis.testResult;',

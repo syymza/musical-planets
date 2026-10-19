@@ -1,6 +1,7 @@
 /* Exercise the actual app handlers with a small DOM fixture. Browser QA remains separate. */
 (function(root){
 root.checkInterface=function(P,ok,close){
+ const C=root.OrbitCamera;
  class Element{
   constructor(){this.hidden=false;this.disabled=false;this.style={setProperty(){}};this.dataset={};this.events={};this.children=[];this.attributes={};this.classes=new Set();this.classList={add:n=>this.classes.add(n),remove:n=>this.classes.delete(n),toggle:(n,on)=>on?this.classes.add(n):this.classes.delete(n),contains:n=>this.classes.has(n)};this.clientWidth=600;}
   addEventListener(name,fn){(this.events[name]??=[]).push(fn);}
@@ -11,13 +12,14 @@ root.checkInterface=function(P,ok,close){
   replaceChildren(){this.children=[];}
   remove(){if(this.parent)this.parent.children=this.parent.children.filter(p=>p!==this);}
   focus(options){this.focusOptions=options;root.document.activeElement=this;for(const f of this.events.focus||[])f({});}
+  contains(child){return this===child||this.children.some(c=>c.contains(child));}
   getBoundingClientRect(){return {left:0,top:0,width:600,height:600};}
   setPointerCapture(){}
   getContext(){return {setTransform(){}};}
  }
  const elements={};root.window=root;root.document={hidden:false,activeElement:null,getElementById(id){return elements[id]??=new Element();},createElement(){return new Element();},querySelectorAll(){return [];},querySelector(){return elements.lineLabel??=new Element();},addEventListener(){}};
  const desktopMedia={matches:true,addEventListener(name,fn){this.change=fn;}};root.matchMedia=query=>query.includes('pointer: fine')?desktopMedia:{matches:false,addEventListener(){}};root.devicePixelRatio=1;root.ResizeObserver=class{observe(){}};root.requestAnimationFrame=()=>0;
- const source=testFiles['app.js'].replace("load('balance');resize();soundUI();requestAnimationFrame(draw);","globalThis.interfaceApp={get bodies(){return system;},get selected(){return selected;},get scaleIndex(){return scaleIndex;},get lineCount(){return lineCount;},get noteCount(){return noteCount;},get rayFlashes(){return rayFlashes;},get simulationTime(){return simulationTime;},load,simulate};load('balance');resize();soundUI();requestAnimationFrame(draw);");
+ const source=testFiles['app.js'].replace("load('balance');resize();soundUI();requestAnimationFrame(draw);","globalThis.interfaceApp={get bodies(){return system;},get selected(){return selected;},get scaleIndex(){return scaleIndex;},get lineCount(){return lineCount;},get noteCount(){return noteCount;},get rayFlashes(){return rayFlashes;},get simulationTime(){return simulationTime;},get view(){return camera;},get aim(){return aim;},load,simulate};load('balance');resize();soundUI();requestAnimationFrame(draw);");
  (0,eval)(source);const app=root.interfaceApp,ps=()=>app.bodies.filter(p=>!p.isStar),input=elements.planetNote;
  ok(elements.planetMassControls.hidden&&input.disabled,'no stale initial selection');
  for(let i=0;i<3;i++)elements.add.onclick({detail:1});
@@ -50,6 +52,9 @@ root.checkInterface=function(P,ok,close){
  ps()[0].el.events.keydown[0]({key:'Delete',preventDefault(){}});ok(ps().length===31&&!elements.add.disabled,'remove reopens a count slot');elements.add.onclick({detail:1});ok(ps().length===32,'removed slot can be filled');
  elements.clear.onclick();ok(ps().length===0&&app.rayFlashes.every(f=>f===0),'clear removes planets and crossing pulses');elements.reset.onclick();ok(ps().length===3&&app.lineCount===12,'reset returns curated scene and retains ray setting');
  const sun=app.bodies.find(p=>p.isStar),planet=ps()[0];ps().slice(1).forEach(p=>p.el.events.keydown[0]({key:'Delete',preventDefault(){}}));Object.assign(planet,{x:sun.x-.001,y:sun.y-1,vx:sun.vx+2,vy:sun.vy});const notes=app.noteCount;app.simulate();ok(app.noteCount>notes&&app.rayFlashes[0]>0,'actual crossing increments count and pulses matching ray');
+ const far=ps()[0];far.offscreen=true;const physicalBefore=[far.x,far.y,far.vx,far.vy,far.mass];elements.stage.events.pointerdown[0]({button:0,isPrimary:true,pointerId:1,target:far.el,preventDefault(){}});ok(app.selected===far.id&&app.aim===null,'edge arrow selects without entering aim');ok(JSON.stringify([far.x,far.y,far.vx,far.vy,far.mass])===JSON.stringify(physicalBefore),'edge selection never moves or relaunches body');
+ app.view.half=C.MAX_HALF;elements.reset.onclick();close(app.view.half,C.BASE_HALF,0,'reset restores original view');close(app.view.x,app.bodies.find(p=>p.isStar).x);elements.clear.onclick();ok(ps().length===0,'clear removes edge-arrow bodies too');elements.reset.onclick();
+
 
 };
 })(globalThis);

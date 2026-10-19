@@ -40,3 +40,5 @@
 
 /* Opening the editor must not shift the keyboard-focused sky. */
 @media(min-width:901px) and (hover:hover) and (pointer:fine){.universe{position:relative;top:auto}}
+
+.planet.is-offscreen::after{content:"";width:9px;height:9px;background:var(--marker-color);clip-path:polygon(0 0,100% 50%,0 100%);transform:rotate(var(--edge-angle));opacity:.85}.planet.is-offscreen:hover::after,.planet.is-offscreen.is-selected::after{background:var(--gold);opacity:1}

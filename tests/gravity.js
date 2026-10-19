@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-(0,eval)(testFiles['physics.js']);const P=OrbitPhysics;let assertions=0;const receipts=[];
+(0,eval)(testFiles['physics.js']);(0,eval)(testFiles['camera.js']);const P=OrbitPhysics,C=OrbitCamera;let assertions=0;const receipts=[];
 function ok(value,message){assertions++;if(!value)throw Error(message);}
 function close(a,b,t=1e-10,message='numeric equality'){ok(Math.abs(a-b)<=t,`${message}: ${a} vs ${b}`);}
 function scene(m=.06){const s=P.body('s',0,0,0,0,1,true),p=P.body('p',1.4,0,0,Math.sqrt((1+m)*1.4**2/(1.4**2+P.SOFTENING**2)**1.5),m);return P.recenter([s,p]);}
@@ -40,6 +40,20 @@ group('Fast segments cross every intersected ray in chronological order',()=>{
 group('Ray count changes do not affect trajectories, prediction or merger invariants',()=>{
  const one=scene(),many=scene(),before=P.totals(many);for(let i=0;i<1000;i++){P.stepSystem(one);P.stepSystem(many,P.DT,i%12+1);}for(let i=0;i<one.length;i++)for(const k of ['x','y','vx','vy'])close(one[i][k],many[i][k],0,'identical physics with changing ray count');close(P.totals(many).mass,before.mass);
  const ps=scene(),pred=P.predict(ps,'p',.1),actual=ps.map(p=>({...p}));for(let i=0;i<60;i++)P.stepSystem(actual,P.DT,12);close(pred.points.at(-1).x,actual[1].x,1e-12);close(pred.points.at(-1).y,actual[1].y,1e-12);
+});
+
+group('Camera bounds, smooth settling, hysteresis and aiming freeze',()=>{
+ const ps=[P.body('s',4,-3,0,0,1,true),P.body('p',10004,-3,0,0,.012)],view=C.create(ps[0]);const snapshot=JSON.stringify(ps),before={...view};C.update(view,ps,1/60);ok(view.half>before.half&&view.half<C.MAX_HALF,'gentle first zoom step');for(let i=0;i<900;i++)C.update(view,ps,1/60);close(view.half,C.MAX_HALF,1e-10,'distant escape cannot shrink below cap');close(view.x,4);close(view.y,-3);ok(JSON.stringify(ps)===snapshot,'framing does not alter bodies');
+ const frozen=JSON.stringify(view);ps[0].x+=10;for(let i=0;i<60;i++)C.update(view,ps,1/60,true);ok(JSON.stringify(view)===frozen,'aiming freezes position, zoom and target');
+ const goal=4.5,jitter=C.create();jitter.goal=jitter.half=goal;const s=P.body('s',0,0,0,0,1,true),p=P.body('p',goal*(1-C.PADDING)-.06,0,0,0,.012);for(let i=0;i<120;i++){p.x=(goal+.01*Math.sin(i))*(1-C.PADDING)-p.radius;C.update(jitter,[s,p],1/60);}close(jitter.half,goal,0,'small orbital jitter does not pump zoom');
+ const clear=C.create();clear.half=clear.goal=C.MAX_HALF;C.update(clear,[s],1/60);ok(clear.half<C.MAX_HALF&&clear.half>C.BASE_HALF,'clear eases inward');for(let i=0;i<3000;i++)C.update(clear,[],1/60);close(clear.half,C.BASE_HALF,1e-10,'empty model settles safely');ok([clear.x,clear.y,clear.half].every(Number.isFinite),'empty model finite');
+});
+group('Camera projection round trips and marker bounds at desktop/mobile sizes',()=>{
+ for(const size of [120,320,390,600,1280])for(const half of [C.BASE_HALF,5,C.MAX_HALF]){const view={x:-2.3,y:7.2,half};for(const x of [-100,-1,0,2,100])for(const y of [-100,0,3,100]){const q={x,y},back=C.toWorld(C.toScreen(q,view,size),view,size);close(back.x,x,1e-11,'launch x round trip');close(back.y,y,1e-11,'launch y round trip');}for(const p of [{x:-1000,y:20},{x:10000,y:10000},{x:size/2,y:-1000},{x:0,y:10000}]){const marker=C.edge(p,size,28,100);ok(marker.outside&&marker.x>=0&&marker.x<=size&&marker.y>=0&&marker.y<=size,'edge arrow in bounds');ok(Number.isFinite(marker.angle),'finite marker direction');}}
+ const middle=C.edge({x:200,y:200},400);ok(!middle.outside&&middle.x===200&&middle.y===200,'visible body keeps its projection');
+});
+group('Camera updates preserve escaping trajectories and collision results',()=>{
+ const a=scene(),b=scene(),view=C.create();a[1].vx=b[1].vx=3;for(let i=0;i<6000;i++){P.stepSystem(a);P.stepSystem(b);if(i%10===0)C.update(view,b,1/60);}for(let i=0;i<a.length;i++)for(const k of ['x','y','vx','vy','mass','radius'])close(a[i][k],b[i][k],0,'camera cannot change physics');ok(view.half<=C.MAX_HALF,'escaping body respects view cap');ok(P.active(b).length===2,'camera never deletes an escapee');
 });
 
 (0,eval)(testFiles['audio.js']);const A=OrbitAudio;
