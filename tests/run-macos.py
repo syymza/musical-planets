@@ -21,7 +21,7 @@ js.JSStringGetUTF8CString.restype = ctypes.c_size_t
 js.JSStringRelease.argtypes = [ptr]
 js.JSGlobalContextRelease.argtypes = [ptr]
 context = js.JSGlobalContextCreate(None)
-code = 'globalThis.testFiles=' + json.dumps({n:(root/n).read_text() for n in ['physics.js','app.js','audio.js','tests/interface.js']}) + ';\n'
+code = 'globalThis.testFiles=' + json.dumps({n:(root/n).read_text() for n in ['physics.js','camera.js','app.js','audio.js','tests/interface.js']}) + ';\n'
 code += (root / 'tests/gravity.js').read_text() + '\nglobalThis.testResult;'
 script = js.JSStringCreateWithUTF8CString(code.encode())
 error = ptr()
