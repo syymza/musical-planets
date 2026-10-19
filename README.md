@@ -15,6 +15,8 @@ A small browser instrument where gravity makes the rhythm. Add tiny worlds, shap
 - Cycle the scale button through major pentatonic, minor pentatonic and whole tone. The six-position Note slider retunes the selected planet.
 - Use **Pause**, **Reset scene** or **Clear sky** to start another experiment.
 
+On desktop (viewport at least 901 px, primary pointer supports fine control and hover), Tab to the sky and use **[ / ]** for previous/next visible planet. Selection wraps in creation order. The shortcut works only inside the sky, never in a slider, input or editable field, and is disabled on mobile/coarse-pointer layouts. Off-screen bodies keep simulating but are skipped because their controls are hidden.
+
 Tab to a planet, use arrow keys to nudge its velocity, or Delete to remove it. Enter or Space opens its mass control. Reduced motion suppresses trails and pulses; **Pause** stops the simulation.
 
 Sound is synthesized locally with Web Audio. There are no accounts, dependencies, analytics, runtime AI or API calls. Browser audio needs a user gesture; note adjustment can also enable a preview. Actual output depends on the device, volume and audio routing. Physical iPhone playback has not been verified.

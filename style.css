@@ -35,3 +35,8 @@
 
 .line-controls{margin-top:14px}.line-controls .label{display:flex;justify-content:space-between;margin:0}.line-controls output{color:var(--gold);font-variant-numeric:tabular-nums}.line-controls input{min-height:24px}.line-controls+.mass-controls{margin-top:10px}
 @media(min-width:1000px) and (min-height:650px){.line-controls{margin-top:10px}.line-controls+.mass-controls{margin-top:6px;padding-top:8px}.sidebar .tools{margin-top:10px}.sidebar .planet-mass{margin-top:8px}.sidebar .stat{margin-top:6px}}
+
+.keyboard-hint{font-size:10px;line-height:1.5;text-align:center;color:var(--muted);margin:5px 0 10px}.keyboard-hint[hidden]{display:none}.keyboard-hint kbd{font:inherit;color:var(--gold)}.stage:focus-visible{outline:1px solid var(--gold);outline-offset:3px}.planet.is-selected{box-shadow:0 0 0 1px var(--gold);background:#f2cb9109}.planet.is-selected:focus-visible::before{inset:-4px;border-color:#f2cb9155}
+
+/* Opening the editor must not shift the keyboard-focused sky. */
+@media(min-width:901px) and (hover:hover) and (pointer:fine){.universe{position:relative;top:auto}}
